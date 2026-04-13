@@ -1,0 +1,9 @@
+train:
+  epochs: 100
+  labels: 16
+  videos: 4
+  lr: 0.0005
+
+checkpoint:
+  lasted: 'checkpoint/lasted.pth'
+  best: 'checkpoint/best.pth'
