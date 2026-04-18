@@ -1,0 +1,14 @@
+BASIC:
+  GPU: [0,]
+  DATA_PATH: './dataset/root'
+  CHECKPOINT: 'checkpoint'
+  OVERWRITE: False
+  WORKERS: 15
+
+
+TRAIN:
+  EPOCHS: 100
+  BATCH_SIZE: 64
+  RESUME: False
+
+INFERENCE:

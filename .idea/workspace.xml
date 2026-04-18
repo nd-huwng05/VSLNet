@@ -2,15 +2,26 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6af3942a-5de7-4d35-a907-67240361f5cc" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/VSLNet.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/dataset.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/inference.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/model.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/prepare.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/train.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/vsl_net_configuration.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dataset/analytics.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dataset/data_preprocessing.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dataset/prepare_dataset.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dataset/vsl_dataset.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/mode/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/mode/tester.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/mode/trainer.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/run.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/VSLNet.yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/inference.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/model.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/prepare.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -20,6 +31,7 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
+        <option value="Jupyter Notebook" />
         <option value="Python Script" />
       </list>
     </option>
@@ -27,6 +39,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;pkadung&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/nd-huwng05/VSLNet.git&quot;,
+    &quot;accountId&quot;: &quot;9677b94e-1962-47c9-9e73-f7ff50265fea&quot;
+  }
+}</component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 0
@@ -39,7 +63,7 @@
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;Python.dataset.executor&quot;: &quot;Run&quot;,
-    &quot;Python.main.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
     &quot;Python.prepare_data.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
@@ -51,6 +75,12 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="\\wsl.localhost\Ubuntu\home\nd-huwng05\Documents\research\ai_hk2_25_26_sign_language_recognition\VSLNet" />
+      <recent name="\\wsl.localhost\Ubuntu\home\nd-huwng05\Documents\research\ai_hk2_25_26_sign_language_recognition\VSLNet\mode" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="VSLNet" />
@@ -103,6 +133,18 @@
       <workItem from="1774619291939" duration="16799000" />
       <workItem from="1774670845095" duration="13193000" />
       <workItem from="1774719439352" duration="20000" />
+      <workItem from="1776039975709" duration="2465000" />
+      <workItem from="1776077755285" duration="12061000" />
+      <workItem from="1776108895395" duration="35000" />
+      <workItem from="1776366820011" duration="1648000" />
+      <workItem from="1776394739122" duration="15327000" />
+      <workItem from="1776436570191" duration="2046000" />
+      <workItem from="1776445121914" duration="5846000" />
+      <workItem from="1776452986826" duration="2471000" />
+      <workItem from="1776479961332" duration="2803000" />
+      <workItem from="1776522272249" duration="2831000" />
+      <workItem from="1776528894043" duration="44000" />
+      <workItem from="1776528947710" duration="3266000" />
     </task>
     <servers />
   </component>
@@ -112,6 +154,6 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/VSLNet$prepare_data.coverage" NAME="prepare_data Coverage Results" MODIFIED="1774597227670" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/VSLNet$dataset.coverage" NAME="dataset Coverage Results" MODIFIED="1774628317530" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/VSLNet$main.coverage" NAME="main Coverage Results" MODIFIED="1774678369979" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/VSLNet$main.coverage" NAME="main Coverage Results" MODIFIED="1776436687756" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
