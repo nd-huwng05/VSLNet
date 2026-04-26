@@ -2,19 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6af3942a-5de7-4d35-a907-67240361f5cc" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/models/metrics.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/text_encoder.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/vsl_net.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config/vsl_net_configuration.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/config/vsl_net_configuration.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/analytics.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/analytics.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dataset/data_preprocessing.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/data_preprocessing.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dataset/prepare_dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/prepare_dataset.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dataset/vsl_dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/vsl_dataset.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/mode/trainer.py" beforeDir="false" afterPath="$PROJECT_DIR$/mode/trainer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/pose_vsl_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/video_encoder.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/run.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/video_encoder.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/video_encoder.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -169,7 +163,8 @@
       <workItem from="1777167625670" duration="15000" />
       <workItem from="1777167832776" duration="1959000" />
       <workItem from="1777171846904" duration="5000" />
-      <workItem from="1777176446722" duration="3698000" />
+      <workItem from="1777176446722" duration="4908000" />
+      <workItem from="1777183553258" duration="14303000" />
     </task>
     <servers />
   </component>
@@ -178,7 +173,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/VSLNet$prepare_data.coverage" NAME="prepare_data Coverage Results" MODIFIED="1774597227670" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/VSLNet$vsl_dataset.coverage" NAME="vsl_dataset Coverage Results" MODIFIED="1777143489546" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dataset" />
+    <SUITE FILE_PATH="coverage/VSLNet$vsl_dataset.coverage" NAME="vsl_dataset Coverage Results" MODIFIED="1777195203443" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dataset" />
     <SUITE FILE_PATH="coverage/VSLNet$dataset.coverage" NAME="dataset Coverage Results" MODIFIED="1774628317530" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/VSLNet$main.coverage" NAME="main Coverage Results" MODIFIED="1776436687756" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>

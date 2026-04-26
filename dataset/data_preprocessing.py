@@ -13,7 +13,7 @@ class TemporalInterpolatePose:
         if T == self.frames:
             return data
 
-        data_reshaped = data.view(T, V * C).permute(1, 0).unsqueeze(0) # Shape: (1, V*C, T)
+        data_reshaped = data.reshape(T, V * C).permute(1, 0).unsqueeze(0)
         data_interpolated = F.interpolate(
             data_reshaped,
             size=self.frames,
@@ -34,6 +34,22 @@ class UniformTemporalInterpolatePose:
         indices = torch.linspace(0, T - 1, steps=self.frames).long()
         return data[indices, :, :]
 
+class RandomPoseNoise:
+    def __init__(self, std=0.01):
+        self.std = std
+
+    def __call__(self, data: torch.Tensor):
+        noise = torch.randn_like(data) * self.std
+        return data + noise
+
+class RandomPoseScale:
+    def __init__(self, min_scale=0.8, max_scale=1.2):
+        self.min_scale = min_scale
+        self.max_scale = max_scale
+    def __call__(self, data: torch.Tensor):
+        scale = random.uniform(self.min_scale, self.max_scale)
+        return data * scale
+
 class RandomTemporalCrop:
     def __init__(self, frames=64):
         self.frames = frames
@@ -52,8 +68,13 @@ class RandomTemporalCrop:
 
 class GlobalPoseNormalize:
     def __call__(self, data: torch.Tensor):
-        mean_pos = data.mean(dim=(0,1), keepdim=True)
-        return data - mean_pos
+        mean_pos = data.mean(dim=(0, 1), keepdim=True)
+        data = data - mean_pos
+
+        std_pos = data.std(dim=(0, 1), keepdim=True)
+        data = data / (std_pos + 1e-6)
+
+        return data
 
 
 class PointPoseSelect:

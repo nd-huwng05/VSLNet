@@ -6,8 +6,15 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
+import pandas as pd
+from fontTools import unicodedata
 from pose_format import Pose
 from tqdm import tqdm
+
+def normalize_text(text):
+    if pd.isna(text) or text is None:
+        return ""
+    return unicodedata.normalize('NFC', str(text)).strip()
 
 def process_single_video(video, overwrite):
     video = Path(video)

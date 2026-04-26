@@ -1,6 +1,4 @@
 import os
-from json.decoder import NaN
-
 import pandas as pd
 import torch
 from pose_format import Pose
@@ -37,35 +35,41 @@ class VSLPoseDataset(Dataset):
                     "gloss": "string",
                 }
             )
-            df["view"] = view
+            df["view"] = str(view)
+            df["gloss"] = df["gloss"].str.strip()
             df["gloss_id"] = df["gloss"].map(self.gloss2id)
             df["pose_path"] = df['video_id'].apply(
                 lambda x: os.path.join(self.root_dir, f"{view}", f"{x}.pose")
             )
             samples.append(df)
 
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.expand_frame_repr', False)
+        pd.set_option('display.max_colwidth', None)
+
         if not samples:
             raise FileNotFoundError("Not found view json file")
 
         df = pd.concat(samples, ignore_index=True)
-
         common_signer_ids = {
-            "020": (views[0], views[1], views[2]),
-            "014": (views[1], views[2], views[0]),
-            "015": (views[2], views[0], views[1]),
+            # "020": (views[0], views[1], views[2]),
+            # "014": (views[1], views[2], views[0]),
+            # "015": (views[2], views[0], views[1]),
         }
-        val_unique_signer_ids = ["007"]
-        test_unique_signer_ids = ["024"]
+        val_unique_signer_ids = ["007", "020"]
+        test_unique_signer_ids = ["024", "015"]
         val_test_common_signer_ids = ["009"]
         train_not_unique_signer_ids = (
             val_unique_signer_ids + test_unique_signer_ids + val_test_common_signer_ids + list(common_signer_ids.keys())
         )
         view_ids = list(df["view"].unique())
         val_test_df = df[df["signer_id"].isin(val_test_common_signer_ids)]
-        val_df = val_test_df.groupby(["gloss_id", "view"], group_keys=False).apply(
-            lambda x: x.sample(frac=0.5, random_state=42))
-        test_df = val_test_df[~val_test_df.index.isin(val_df.index)]
-        train_df = df[~df["signer_id"].isin(train_not_unique_signer_ids)]
+        val_test_df["_temp_id"] = range(len(val_test_df))
+        val_df = val_test_df.groupby(["gloss_id", "view"]).sample(frac=0.5, random_state=42)
+        test_df = val_test_df[~val_test_df["_temp_id"].isin(val_df["_temp_id"])]
+        val_df = val_df.drop(columns=["_temp_id"]).reset_index(drop=True)
+        test_df = test_df.drop(columns=["_temp_id"]).reset_index(drop=True)
+        train_df = df[~df["signer_id"].isin(train_not_unique_signer_ids)].copy()
         val_df = pd.concat([df[df["signer_id"].isin(val_unique_signer_ids)], val_df], ignore_index=True)
         test_df = pd.concat([df[df["signer_id"].isin(test_unique_signer_ids)], test_df], ignore_index=True)
         for signer_id, (train_view, val_view, test_view) in common_signer_ids.items():
@@ -79,16 +83,14 @@ class VSLPoseDataset(Dataset):
                 test_df = pd.concat([df[(df["signer_id"] == signer_id) & (df["view"] == test_view)], test_df],
                                     ignore_index=True)
         if self.split == "train":
-            final_df = train_df
+            final_df = train_df[train_df['view'] == views[0]]
         elif self.split == "val":
-            final_df = val_df
+            final_df = val_df[val_df['view'] == views[0]]
         elif self.split == "test":
-            final_df = test_df
+            final_df = test_df[test_df['view'] == views[0]]
         else:
             raise ValueError("Split is 'train', 'val' or 'test'")
 
-        final_df = final_df.dropna(subset=['gloss_id', 'pose_path'])
-        final_df['gloss_id'] = final_df['gloss_id'].astype(int)
         return final_df.reset_index(drop=True)
 
     def __len__(self):

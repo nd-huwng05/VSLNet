@@ -4,7 +4,7 @@ import math
 import torch.nn.functional as F
 
 class TemporalPositionalEncoding(nn.Module):
-    def __init__(self, dim, dropout=0.1, max_len=500):
+    def __init__(self, dim, dropout=0.3, max_len=500):
         super(TemporalPositionalEncoding, self).__init__()
         self.dropout = nn.Dropout(p=dropout)
         position = torch.arange(0, max_len).unsqueeze(1) # matrix(T) 1,256

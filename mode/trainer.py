@@ -3,11 +3,11 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision.transforms import transforms
 from tqdm import tqdm
-from dataset.data_preprocessing import RandomTemporalCrop, GlobalPoseNormalize, UniformTemporalInterpolatePose
+from dataset.data_preprocessing import RandomTemporalCrop, GlobalPoseNormalize, UniformTemporalInterpolatePose, \
+    RandomPoseScale, RandomPoseNoise, TemporalInterpolatePose
 from dataset.vsl_dataset import VSLPoseDataset
 from models.metrics import contrastive_loss, calculate_metrics
 from models.vsl_net import VSLContrastiveNet
-
 
 def train(args):
     print("Mode training...")
@@ -15,12 +15,14 @@ def train(args):
     print(f"Setting device {device} successfully!")
     print(f"Preparing data loaders...")
     train_transforms = transforms.Compose([
-        RandomTemporalCrop(frames=args.FRAMES),
+        RandomPoseScale(min_scale=0.8, max_scale=1.2),  # Scale
+        RandomPoseNoise(std=0.005),  # Noise
+        TemporalInterpolatePose(frames=args.FRAMES),
         GlobalPoseNormalize()
     ])
 
     val_transforms = transforms.Compose([
-        UniformTemporalInterpolatePose(frames=args.FRAMES),
+        TemporalInterpolatePose(frames=args.FRAMES),
         GlobalPoseNormalize()
     ])
 
@@ -32,7 +34,7 @@ def train(args):
     print(f"Loader dataset ready!")
     print(f"Preparing models...")
     model = VSLContrastiveNet(vocab_size=args.VOCAB_SIZE, embedding_size=args.EMBEDDING_SIZE).to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=float(args.LR), weight_decay=0.01)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=float(args.LR), weight_decay=0.05)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.EPOCHS)
     print(f"Preparing models successfully!")
     if not os.path.exists(os.path.join(args.CHECKPOINT)): os.makedirs(os.path.join(args.CHECKPOINT))
@@ -56,7 +58,7 @@ def train(args):
         train_loss = 0.0
         train_r1 = 0.0
 
-        pbar_train = tqdm(train_loader, desc="Training")
+        pbar_train = tqdm(train_loader, desc=f"[Training] Epoch {epoch}/{args.EPOCHS}")
         for pose, label in pbar_train:
             videos = pose.to(device)
             labels = label.to(device)
