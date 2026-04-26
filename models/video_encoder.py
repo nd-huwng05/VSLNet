@@ -21,7 +21,7 @@ class TemporalPositionalEncoding(nn.Module):
         return self.dropout(x)
 
 class VideoEncoder(nn.Module):
-    def __init__(self, num_joints=42, in_chans=3, d_spatial=64, d_temporal=256, num_frames=64, dropout=0.1, embedding_size=256):
+    def __init__(self, num_joints=54, in_chans=2, d_spatial=64, d_temporal=256, num_frames=64, dropout=0.1, embedding_size=256):
         super(VideoEncoder, self).__init__()
         self.spatial_proj = nn.Linear(in_chans, d_spatial)
         self.spatial_cls_token = nn.Parameter(torch.randn(1,1,d_spatial))
@@ -43,9 +43,9 @@ class VideoEncoder(nn.Module):
         )
 
     def forward(self, x):
-        B, T, _ = x.shape  # (B, 64, 126), T is num frames
+        B, T, _ = x.shape  # (B, 64, 54*2), T is num frames
 
-        x = x.view(B * T, 42, 3)
+        x = x.view(B * T, 54, 2)
 
         x = self.spatial_proj(x) # 3 dim -> 64 dim, (B*T, 42, 64)
         cls_spatial = self.spatial_cls_token.expand(B * T, -1, -1) #(B*T, 1, 64)

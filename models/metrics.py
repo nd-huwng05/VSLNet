@@ -1,13 +1,33 @@
 import torch
 import torch.nn.functional as F
+from torch import nn
 
-def contrastive_loss(logits_v, logits_t):
-    batch_size = logits_v.size(0)
-    targets = torch.arange(batch_size).to(logits_v.device)
 
-    loss_video = F.cross_entropy(logits_v, targets)
-    loss_text = F.cross_entropy(logits_t, targets)
-    return (loss_video + loss_text) / 2.0
+class SupervisedContrastiveLoss(nn.Module):
+    def __init__(self, temperature=0.07):
+        super().__init__()
+        self.temperature = temperature
+
+    def forward(self, video_features, text_features, labels):
+        video_features = F.normalize(video_features, p=2, dim=1)
+        text_features = F.normalize(text_features, p=2, dim=1)
+
+        logits_v = (video_features @ text_features.T) / self.temperature
+        logits_t = (text_features @ video_features.T) / self.temperature
+
+        labels = labels.contiguous().view(-1, 1)
+        mask = torch.eq(labels, labels.T).float().to(video_features.device)
+
+        mask_sum = mask.sum(dim=1, keepdim=True)
+        target_probs = mask / torch.clamp(mask_sum, min=1e-8)
+
+        log_probs_v = F.log_softmax(logits_v, dim=1)
+        log_probs_t = F.log_softmax(logits_t, dim=1)
+
+        loss_v = -torch.sum(target_probs * log_probs_v, dim=1).mean()
+        loss_t = -torch.sum(target_probs * log_probs_t, dim=1).mean()
+
+        return (loss_v + loss_t) / 2.0
 
 def calculate_metrics(logits_v, logits_t):
     batch_size = logits_v.size(0)

@@ -3,8 +3,10 @@ import pandas as pd
 import torch
 from pose_format import Pose
 from torch.utils.data import Dataset
+from torchvision.transforms import Compose
 
-from dataset.data_preprocessing import PointPoseSelect, train_transforms, val_test_transforms
+from dataset.data_preprocessing import PoseJoinSelect, RandomTemporalCrop, PoseNormalize, RandomPoseScale, \
+    RandomPoseNoise, TemporalInterpolatePose
 
 
 class VSLPoseDataset(Dataset):
@@ -12,7 +14,6 @@ class VSLPoseDataset(Dataset):
         self.root_dir = root_dir
         self.split = split
         self.transform = transform
-        self.point_selector = PointPoseSelect()
 
         gloss_df = pd.read_csv(os.path.join(self.root_dir, f"gloss.csv"))
         self.gloss2id = dict(zip(gloss_df['gloss'], gloss_df['id']))
@@ -83,11 +84,11 @@ class VSLPoseDataset(Dataset):
                 test_df = pd.concat([df[(df["signer_id"] == signer_id) & (df["view"] == test_view)], test_df],
                                     ignore_index=True)
         if self.split == "train":
-            final_df = train_df[train_df['view'] == views[0]]
+            final_df = train_df
         elif self.split == "val":
-            final_df = val_df[val_df['view'] == views[0]]
+            final_df = val_df
         elif self.split == "test":
-            final_df = test_df[test_df['view'] == views[0]]
+            final_df = test_df
         else:
             raise ValueError("Split is 'train', 'val' or 'test'")
 
@@ -107,10 +108,8 @@ class VSLPoseDataset(Dataset):
                 print(f"Bad file: {row['pose_path']}, size={len(data)}")
                 raise e
 
-        pose_data = self.point_selector(pose_obj)
-
         if self.transform:
-            pose_data = self.transform(pose_data)
+            pose_data = self.transform(pose_obj)
 
         pose_data = pose_data.reshape(pose_data.size(0), -1)
         label = torch.tensor(row['gloss_id'], dtype=torch.long)
@@ -118,6 +117,20 @@ class VSLPoseDataset(Dataset):
         return pose_data, label
 
 if __name__ == '__main__':
+    train_transforms = Compose([
+        PoseJoinSelect(),
+        RandomTemporalCrop(frames=64),
+        PoseNormalize(),
+        RandomPoseScale(0.8, 1.2),
+        RandomPoseNoise(std=0.01)
+    ])
+
+    val_test_transforms = Compose([
+        PoseJoinSelect(),
+        TemporalInterpolatePose(frames=64),
+        PoseNormalize()
+    ])
+
     train = VSLPoseDataset(root_dir='../dataset/root', split='train', transform=train_transforms)
     test = VSLPoseDataset(root_dir='../dataset/root', split='test', transform=val_test_transforms)
     val = VSLPoseDataset(root_dir='../dataset/root', split='val', transform=val_test_transforms)

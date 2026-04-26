@@ -1,12 +1,11 @@
 import os
 import torch
 from torch.utils.data import DataLoader
-from torchvision.transforms import transforms
+from torchvision.transforms import transforms, Compose
 from tqdm import tqdm
-from dataset.data_preprocessing import RandomTemporalCrop, GlobalPoseNormalize, UniformTemporalInterpolatePose, \
-    RandomPoseScale, RandomPoseNoise, TemporalInterpolatePose
+from dataset.data_preprocessing import RandomTemporalCrop, RandomPoseScale, RandomPoseNoise, TemporalInterpolatePose, PoseJoinSelect, PoseNormalize
 from dataset.vsl_dataset import VSLPoseDataset
-from models.metrics import contrastive_loss, calculate_metrics
+from models.metrics import SupervisedContrastiveLoss, calculate_metrics
 from models.vsl_net import VSLContrastiveNet
 
 def train(args):
@@ -14,16 +13,18 @@ def train(args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Setting device {device} successfully!")
     print(f"Preparing data loaders...")
-    train_transforms = transforms.Compose([
-        RandomPoseScale(min_scale=0.8, max_scale=1.2),  # Scale
-        RandomPoseNoise(std=0.005),  # Noise
-        TemporalInterpolatePose(frames=args.FRAMES),
-        GlobalPoseNormalize()
+    train_transforms = Compose([
+        PoseJoinSelect(),
+        RandomTemporalCrop(frames=64),
+        PoseNormalize(),
+        RandomPoseScale(0.8, 1.2),
+        RandomPoseNoise(std=0.01)
     ])
 
-    val_transforms = transforms.Compose([
-        TemporalInterpolatePose(frames=args.FRAMES),
-        GlobalPoseNormalize()
+    val_transforms = Compose([
+        PoseJoinSelect(),
+        TemporalInterpolatePose(frames=64),
+        PoseNormalize()
     ])
 
     train_dataset = VSLPoseDataset(root_dir=args.DATA_PATH, split='train', transform=train_transforms)
@@ -36,6 +37,7 @@ def train(args):
     model = VSLContrastiveNet(vocab_size=args.VOCAB_SIZE, embedding_size=args.EMBEDDING_SIZE).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=float(args.LR), weight_decay=0.05)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.EPOCHS)
+    criterion = SupervisedContrastiveLoss().to(device)
     print(f"Preparing models successfully!")
     if not os.path.exists(os.path.join(args.CHECKPOINT)): os.makedirs(os.path.join(args.CHECKPOINT))
 
@@ -64,7 +66,7 @@ def train(args):
             labels = label.to(device)
             optimizer.zero_grad()
             logits_v, logits_t = model(videos, labels)
-            loss = contrastive_loss(logits_v, logits_t)
+            loss = criterion(logits_v, logits_t, labels)
             metrics = calculate_metrics(logits_v, logits_t)
             loss.backward()
             optimizer.step()
@@ -89,7 +91,7 @@ def train(args):
                 videos, labels = pose.to(device), label.to(device)
 
                 logits_v, logits_t = model(videos, labels)
-                loss = contrastive_loss(logits_v, logits_t)
+                loss = criterion(logits_v, logits_t, labels)
                 metrics = calculate_metrics(logits_v, logits_t)
 
                 val_loss += loss.item()
