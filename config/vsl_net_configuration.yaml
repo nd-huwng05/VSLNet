@@ -1,14 +1,17 @@
 BASIC:
   GPU: [0,]
   DATA_PATH: './dataset/root'
-  CHECKPOINT: 'checkpoint'
+  CHECKPOINT: './checkpoint'
   OVERWRITE: False
   WORKERS: 15
-
+  VOCAB_SIZE: 400
+  EMBEDDING_SIZE: 256
+  FRAMES: 64
 
 TRAIN:
   EPOCHS: 100
-  BATCH_SIZE: 64
+  BATCH_SIZE: 32
+  LR: 1e-4
   RESUME: False
 
 INFERENCE:

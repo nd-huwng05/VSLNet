@@ -2,26 +2,19 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6af3942a-5de7-4d35-a907-67240361f5cc" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/config/vsl_net_configuration.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/dataset/analytics.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/dataset/data_preprocessing.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/dataset/prepare_dataset.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/dataset/vsl_dataset.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/mode/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/mode/tester.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/mode/trainer.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/metrics.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/text_encoder.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/vsl_net.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/VSLNet.yaml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/inference.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/model.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/prepare.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/vsl_net_configuration.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/config/vsl_net_configuration.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/analytics.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/analytics.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/data_preprocessing.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/data_preprocessing.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/prepare_dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/prepare_dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/vsl_dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/vsl_dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mode/trainer.py" beforeDir="false" afterPath="$PROJECT_DIR$/mode/trainer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/pose_vsl_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/video_encoder.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/run.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -65,6 +58,7 @@
     &quot;Python.dataset.executor&quot;: &quot;Run&quot;,
     &quot;Python.main.executor&quot;: &quot;Run&quot;,
     &quot;Python.prepare_data.executor&quot;: &quot;Run&quot;,
+    &quot;Python.vsl_dataset.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
@@ -81,7 +75,7 @@
       <recent name="\\wsl.localhost\Ubuntu\home\nd-huwng05\Documents\research\ai_hk2_25_26_sign_language_recognition\VSLNet\mode" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Python.vsl_dataset">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="VSLNet" />
       <option name="ENV_FILES" value="" />
@@ -106,8 +100,33 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="vsl_dataset" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="VSLNet" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/dataset" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/dataset/vsl_dataset.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.vsl_dataset" />
         <item itemvalue="Python.main" />
       </list>
     </recent_temporary>
@@ -144,7 +163,13 @@
       <workItem from="1776479961332" duration="2803000" />
       <workItem from="1776522272249" duration="2831000" />
       <workItem from="1776528894043" duration="44000" />
-      <workItem from="1776528947710" duration="3266000" />
+      <workItem from="1776528947710" duration="3723000" />
+      <workItem from="1777143966177" duration="826000" />
+      <workItem from="1777167344983" duration="115000" />
+      <workItem from="1777167625670" duration="15000" />
+      <workItem from="1777167832776" duration="1959000" />
+      <workItem from="1777171846904" duration="5000" />
+      <workItem from="1777176446722" duration="3698000" />
     </task>
     <servers />
   </component>
@@ -153,6 +178,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/VSLNet$prepare_data.coverage" NAME="prepare_data Coverage Results" MODIFIED="1774597227670" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/VSLNet$vsl_dataset.coverage" NAME="vsl_dataset Coverage Results" MODIFIED="1777143489546" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dataset" />
     <SUITE FILE_PATH="coverage/VSLNet$dataset.coverage" NAME="dataset Coverage Results" MODIFIED="1774628317530" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/VSLNet$main.coverage" NAME="main Coverage Results" MODIFIED="1776436687756" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>

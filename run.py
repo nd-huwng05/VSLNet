@@ -22,6 +22,9 @@ def get_parser_basics(parser):
     parser.add_argument('--path', type=str, default='config/vsl_net_configuration.yaml', help='Path to config file')
     parser.add_argument('--gpu', type=int, nargs='+', help="Array id's gpu to use")
     parser.add_argument('--data', type=str, help='Path to dataset')
+    parser.add_argument('--vocab-size', type=int, help='Vocabulary size')
+    parser.add_argument('--embedding_size', type=int, help='Embedding size')
+    parser.add_argument('--frames', type=int, help='Num of frames')
 
 
 if __name__ == "__main__":
@@ -36,6 +39,7 @@ if __name__ == "__main__":
     get_parser_basics(parser_train)
     parser_train.add_argument('--epochs', type=int, help='Number of epochs')
     parser_train.add_argument('--batch-size', type=int, help='Batch size')
+    parser_train.add_argument('--lr', type=float, help='Learning rate')
     parser_train.add_argument('--resume', type=bool,  help='Continue training from checkpoint')
     parser_train.set_defaults(func=train)
 
