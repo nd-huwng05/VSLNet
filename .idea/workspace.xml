@@ -2,12 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6af3942a-5de7-4d35-a907-67240361f5cc" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/data_preprocessing.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/data_preprocessing.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset/vsl_dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/vsl_dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mode/tester.py" beforeDir="false" afterPath="$PROJECT_DIR$/mode/tester.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/mode/trainer.py" beforeDir="false" afterPath="$PROJECT_DIR$/mode/trainer.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/models/metrics.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/metrics.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/video_encoder.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/video_encoder.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/vsl_net.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/vsl_net.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/run.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -164,7 +165,7 @@
       <workItem from="1777171846904" duration="5000" />
       <workItem from="1777176446722" duration="4908000" />
       <workItem from="1777183553258" duration="15350000" />
-      <workItem from="1777211492717" duration="5088000" />
+      <workItem from="1777211492717" duration="11189000" />
     </task>
     <servers />
   </component>

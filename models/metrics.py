@@ -4,19 +4,12 @@ from torch import nn
 
 
 class SupervisedContrastiveLoss(nn.Module):
-    def __init__(self, temperature=0.07):
+    def __init__(self):
         super().__init__()
-        self.temperature = temperature
 
-    def forward(self, video_features, text_features, labels):
-        video_features = F.normalize(video_features, p=2, dim=1)
-        text_features = F.normalize(text_features, p=2, dim=1)
-
-        logits_v = (video_features @ text_features.T) / self.temperature
-        logits_t = (text_features @ video_features.T) / self.temperature
-
+    def forward(self, logits_v, logits_t, labels):
         labels = labels.contiguous().view(-1, 1)
-        mask = torch.eq(labels, labels.T).float().to(video_features.device)
+        mask = torch.eq(labels, labels.T).float().to(logits_v.device)
 
         mask_sum = mask.sum(dim=1, keepdim=True)
         target_probs = mask / torch.clamp(mask_sum, min=1e-8)
@@ -29,19 +22,24 @@ class SupervisedContrastiveLoss(nn.Module):
 
         return (loss_v + loss_t) / 2.0
 
-def calculate_metrics(logits_v, logits_t):
-    batch_size = logits_v.size(0)
-    targets = torch.arange(batch_size).to(logits_v.device)
+
+def calculate_metrics(logits_v, logits_t, labels):
+    labels = labels.view(-1)
 
     def get_recall(logits, k):
         actual_k = min(k, logits.size(1))
         _, top_k_indices = logits.topk(actual_k, dim=1)
-        correct = (top_k_indices == targets.view(-1, 1)).sum(dim=1)
+        retrieved_labels = labels[top_k_indices]
+        correct = (retrieved_labels == labels.view(-1, 1)).any(dim=1)
+
         return correct.float().mean().item()
 
     def get_mean_rank(logits):
         sorted_indices = logits.argsort(dim=1, descending=True)
-        ranks = (sorted_indices == targets.view(-1, 1)).nonzero(as_tuple=True)[1] + 1
+        sorted_labels = labels[sorted_indices]
+        correct_mask = (sorted_labels == labels.view(-1, 1))
+        ranks = correct_mask.float().argmax(dim=1) + 1
+
         return ranks.float().mean().item()
 
     return {

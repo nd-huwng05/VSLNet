@@ -6,10 +6,12 @@ import yaml
 
 from dataset.prepare_dataset import prepare
 from mode import *
+from mode.tester import test
 
 
 def load_yaml(mode, path):
     assert mode in ['train', 'test', 'inference', 'prepare']
+    if mode in ['train','test']: mode = 'train'
     assert os.path.exists(path)
     with open(path, 'r', encoding='utf-8') as f:
         configuration = yaml.safe_load(f)
@@ -46,8 +48,7 @@ if __name__ == "__main__":
     # Test
     parser_test = subparsers.add_parser('test', help='Test model configuration')
     get_parser_basics(parser_test)
-    parser_test.add_argument('--weights', type=str, required=True, help='Path to model weights (.pt, .h5)')
-    parser_test.set_defaults(func=train)
+    parser_test.set_defaults(func=test)
 
     # Inference
     parser_infer = subparsers.add_parser('inference', help='Inference model configuration')

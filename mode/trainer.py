@@ -1,5 +1,6 @@
 import os
 import torch
+from torch.optim.lr_scheduler import LinearLR, CosineAnnealingLR, SequentialLR
 from torch.utils.data import DataLoader
 from torchvision.transforms import transforms, Compose
 from tqdm import tqdm
@@ -36,7 +37,9 @@ def train(args):
     print(f"Preparing models...")
     model = VSLContrastiveNet(vocab_size=args.VOCAB_SIZE, embedding_size=args.EMBEDDING_SIZE).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=float(args.LR), weight_decay=0.05)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.EPOCHS)
+    warmup_scheduler = LinearLR(optimizer, start_factor=0.01, total_iters=5)
+    cosine_scheduler = CosineAnnealingLR(optimizer, T_max=args.EPOCHS - 5, eta_min=1e-6)
+    scheduler = SequentialLR(optimizer, schedulers=[warmup_scheduler, cosine_scheduler], milestones=[5])
     criterion = SupervisedContrastiveLoss().to(device)
     print(f"Preparing models successfully!")
     if not os.path.exists(os.path.join(args.CHECKPOINT)): os.makedirs(os.path.join(args.CHECKPOINT))
@@ -67,7 +70,7 @@ def train(args):
             optimizer.zero_grad()
             logits_v, logits_t = model(videos, labels)
             loss = criterion(logits_v, logits_t, labels)
-            metrics = calculate_metrics(logits_v, logits_t)
+            metrics = calculate_metrics(logits_v, logits_t, labels)
             loss.backward()
             optimizer.step()
 
@@ -86,13 +89,13 @@ def train(args):
         val_metrics = {k: 0.0 for k in
                        ['V2T_R1', 'V2T_R5', 'V2T_R10', 'V2T_Rank', 'T2V_R1', 'T2V_R5', 'T2V_R10', 'T2V_Rank']}
         with torch.no_grad():
-            pbar_val = tqdm(val_loader, desc="Val  ", leave=False)
+            pbar_val = tqdm(val_loader, desc="[Validating]", leave=False)
             for pose, label in pbar_val:
                 videos, labels = pose.to(device), label.to(device)
 
                 logits_v, logits_t = model(videos, labels)
                 loss = criterion(logits_v, logits_t, labels)
-                metrics = calculate_metrics(logits_v, logits_t)
+                metrics = calculate_metrics(logits_v, logits_t, labels)
 
                 val_loss += loss.item()
                 for k in metrics:
