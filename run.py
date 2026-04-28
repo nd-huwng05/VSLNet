@@ -6,6 +6,7 @@ import yaml
 
 from dataset.prepare_dataset import prepare
 from mode import *
+from mode.inferencer import inference
 from mode.tester import test
 
 
@@ -53,7 +54,7 @@ if __name__ == "__main__":
     # Inference
     parser_infer = subparsers.add_parser('inference', help='Inference model configuration')
     get_parser_basics(parser_infer)
-    parser_infer.set_defaults(func=train)
+    parser_infer.set_defaults(func=inference)
 
     # Prepare Dataset
     parser_pre = subparsers.add_parser('prepare', help='Prepare dataset')

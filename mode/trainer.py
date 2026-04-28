@@ -2,12 +2,16 @@ import os
 import torch
 from torch.optim.lr_scheduler import LinearLR, CosineAnnealingLR, SequentialLR
 from torch.utils.data import DataLoader
-from torchvision.transforms import transforms, Compose
+from torch.utils.tensorboard import SummaryWriter
+from torchvision.transforms import Compose
 from tqdm import tqdm
-from dataset.data_preprocessing import RandomTemporalCrop, RandomPoseScale, RandomPoseNoise, TemporalInterpolatePose, PoseJoinSelect, PoseNormalize
+import torch.nn.functional as F
+from dataset.data_preprocessing import RandomTemporalCrop, RandomPoseScale, RandomPoseNoise, TemporalInterpolatePose, \
+    PoseJoinSelect, PoseNormalize
 from dataset.vsl_dataset import VSLPoseDataset
 from models.metrics import SupervisedContrastiveLoss, calculate_metrics
 from models.vsl_net import VSLContrastiveNet
+
 
 def train(args):
     print("Mode training...")
@@ -38,11 +42,15 @@ def train(args):
     model = VSLContrastiveNet(vocab_size=args.VOCAB_SIZE, embedding_size=args.EMBEDDING_SIZE).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=float(args.LR), weight_decay=0.05)
     warmup_scheduler = LinearLR(optimizer, start_factor=0.01, total_iters=5)
-    cosine_scheduler = CosineAnnealingLR(optimizer, T_max=args.EPOCHS - 5, eta_min=1e-6)
+    cosine_scheduler = CosineAnnealingLR(optimizer, T_max=args.EPOCHS - 5, eta_min=1e-5)
     scheduler = SequentialLR(optimizer, schedulers=[warmup_scheduler, cosine_scheduler], milestones=[5])
     criterion = SupervisedContrastiveLoss().to(device)
     print(f"Preparing models successfully!")
     if not os.path.exists(os.path.join(args.CHECKPOINT)): os.makedirs(os.path.join(args.CHECKPOINT))
+
+    log_dir = os.path.join(args.TENSORBOARD)
+    writer = SummaryWriter(log_dir=log_dir)
+    print(f"TensorBoard log directory set to: {log_dir}")
 
     start_epoch = 0
     best_val_r1 = 0.0
@@ -62,6 +70,7 @@ def train(args):
         model.train()
         train_loss = 0.0
         train_r1 = 0.0
+        train_conf = 0.0
 
         pbar_train = tqdm(train_loader, desc=f"[Training] Epoch {epoch}/{args.EPOCHS}")
         for pose, label in pbar_train:
@@ -77,15 +86,24 @@ def train(args):
             train_loss += loss.item()
             train_r1 += metrics['V2T_R1']
 
+            probs_v = F.softmax(logits_v, dim=1)
+            mask = torch.eq(labels.view(-1, 1), labels.view(1, -1)).float()
+            conf = (probs_v * mask).sum(dim=1).mean().item()
+            train_conf += conf
+
             pbar_train.set_postfix({
                 'loss': f"{loss.item():.4f}",
-                'acc': f"{metrics['V2T_R1'] * 100:.1f}%"
+                'acc': f"{metrics['V2T_R1'] * 100:.1f}%",
+                'conf': f"{conf * 100:.1f}%"
             })
 
         avg_train_loss = train_loss / len(train_loader)
         avg_train_r1 = train_r1 / len(train_loader)
+        avg_train_conf = train_conf / len(train_loader)
+
         model.eval()
         val_loss = 0.0
+        val_conf = 0.0
         val_metrics = {k: 0.0 for k in
                        ['V2T_R1', 'V2T_R5', 'V2T_R10', 'V2T_Rank', 'T2V_R1', 'T2V_R5', 'T2V_R10', 'T2V_Rank']}
         with torch.no_grad():
@@ -101,20 +119,38 @@ def train(args):
                 for k in metrics:
                     val_metrics[k] += metrics[k]
 
+                probs_v = F.softmax(logits_v, dim=1)
+                mask = torch.eq(labels.view(-1, 1), labels.view(1, -1)).float()
+                conf = (probs_v * mask).sum(dim=1).mean().item()
+                val_conf += conf
+
                 pbar_val.set_postfix({
                     'loss': f"{loss.item():.4f}",
-                    'acc': f"{metrics['V2T_R1'] * 100:.1f}%"
+                    'acc': f"{metrics['V2T_R1'] * 100:.1f}%",
+                    'conf': f"{conf * 100:.1f}%"
                 })
 
         num_val_batches = len(val_loader)
         avg_val_loss = val_loss / num_val_batches
+        avg_val_conf = val_conf / num_val_batches
         for k in val_metrics:
             val_metrics[k] /= num_val_batches
 
         scheduler.step()
-        print(f"[Train] Loss: {avg_train_loss:.4f} | Acc/R@1: {avg_train_r1 * 100:.2f}%")
-        print(f"[Val]  Loss: {avg_val_loss:.4f} | Acc/R@1: {val_metrics['V2T_R1'] * 100:.2f}%")
-        print(f"[Metrics] R@5: {val_metrics['V2T_R5'] * 100:.1f}% | R@10: {val_metrics['V2T_R10'] * 100:.1f}% | MeanRank: {val_metrics['V2T_Rank']:.2f}")
+        print(
+            f"[Train] Loss: {avg_train_loss:.4f} | Acc/R@1: {avg_train_r1 * 100:.2f}% | Conf: {avg_train_conf * 100:.2f}%")
+        print(
+            f"[Val]  Loss: {avg_val_loss:.4f} | Acc/R@1: {val_metrics['V2T_R1'] * 100:.2f}% | Conf: {avg_val_conf * 100:.2f}%")
+        print(
+            f"[Metrics] R@5: {val_metrics['V2T_R5'] * 100:.1f}% | R@10: {val_metrics['V2T_R10'] * 100:.1f}% | MeanRank: {val_metrics['V2T_Rank']:.2f}")
+
+        writer.add_scalars('Loss', {'Train': avg_train_loss, 'Val': avg_val_loss}, epoch)
+        writer.add_scalars('Accuracy_R1', {'Train': avg_train_r1 * 100, 'Val': val_metrics['V2T_R1'] * 100}, epoch)
+        writer.add_scalars('Confidence', {'Train': avg_train_conf * 100, 'Val': avg_val_conf * 100}, epoch)
+        writer.add_scalar('Metrics/Val_R5', val_metrics['V2T_R5'] * 100, epoch)
+        writer.add_scalar('Metrics/Val_R10', val_metrics['V2T_R10'] * 100, epoch)
+        current_lr = optimizer.param_groups[0]['lr']
+        writer.add_scalar('Hyperparameters/LearningRate', current_lr, epoch)
 
         torch.save({
             'epoch': epoch,
@@ -127,4 +163,6 @@ def train(args):
         if val_metrics['V2T_R1'] > best_val_r1:
             best_val_r1 = val_metrics['V2T_R1']
             torch.save(model.state_dict(), os.path.join(args.CHECKPOINT, 'best.pth'))
-            print(f"[+] Accuracy improved! Saved new best model to '{os.path.join(args.CHECKPOINT, 'best.pth')}' (Acc: {best_val_r1 * 100:.2f}%)")
+            print(
+                f"[+] Accuracy improved! Saved new best model to '{os.path.join(args.CHECKPOINT, 'best.pth')}' (Acc: {best_val_r1 * 100:.2f}%)")
+    writer.close()

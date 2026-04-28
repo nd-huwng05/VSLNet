@@ -2,14 +2,23 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-
 class SupervisedContrastiveLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, margin=1.5, neg_penalty=1, temperature=1.5):
         super().__init__()
+        self.margin = margin
+        self.neg_penalty = neg_penalty
+        self.temperature = temperature
 
     def forward(self, logits_v, logits_t, labels):
         labels = labels.contiguous().view(-1, 1)
         mask = torch.eq(labels, labels.T).float().to(logits_v.device)
+        neg_mask = 1.0 - mask
+
+        logits_v = logits_v - (mask * self.margin) + (neg_mask * self.neg_penalty)
+        logits_t = logits_t - (mask * self.margin) + (neg_mask * self.neg_penalty)
+
+        logits_v = logits_v / self.temperature
+        logits_t = logits_t / self.temperature
 
         mask_sum = mask.sum(dim=1, keepdim=True)
         target_probs = mask / torch.clamp(mask_sum, min=1e-8)
