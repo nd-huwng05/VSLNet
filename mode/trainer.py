@@ -1,4 +1,6 @@
 import os
+
+import pandas as pd
 import torch
 from torch.optim.lr_scheduler import LinearLR, CosineAnnealingLR, SequentialLR
 from torch.utils.data import DataLoader
@@ -104,10 +106,14 @@ def train(args):
         model.eval()
         val_loss = 0.0
         val_conf = 0.0
+        csv_data = []
         val_metrics = {k: 0.0 for k in
                        ['V2T_R1', 'V2T_R5', 'V2T_R10', 'V2T_Rank', 'T2V_R1', 'T2V_R5', 'T2V_R10', 'T2V_Rank']}
         with torch.no_grad():
             pbar_val = tqdm(val_loader, desc="[Validating]", leave=False)
+            all_text_indices = torch.arange(args.VOCAB_SIZE).to(device)
+            text_embeddings_full = model.text_encoder(all_text_indices)
+            text_embeddings_full = F.normalize(text_embeddings_full, p=2, dim=-1)
             for pose, label in pbar_val:
                 videos, labels = pose.to(device), label.to(device)
 
@@ -124,6 +130,28 @@ def train(args):
                 conf = (probs_v * mask).sum(dim=1).mean().item()
                 val_conf += conf
 
+                video_embedding = model.video_encoder(videos)
+                video_embedding = F.normalize(video_embedding, p=2, dim=-1)
+
+                logit_scale = model.logit_scale.exp()
+                similarities = video_embedding @ text_embeddings_full.T
+                logits_full = logit_scale * similarities
+                probs_full = F.softmax(logits_full, dim=-1)
+
+                max_probs, preds = probs_full.max(dim=-1)
+                for i in range(len(labels)):
+                    true_lbl = labels[i].item()
+                    pred_lbl = preds[i].item()
+                    global_conf = max_probs[i].item()
+                    is_correct = bool(true_lbl == pred_lbl)
+
+                    csv_data.append({
+                        'LABEL': true_lbl,
+                        'PREDICTED': pred_lbl,
+                        'CONFIDENCE': round(global_conf, 4),
+                        'CORRECT': is_correct
+                    })
+
                 pbar_val.set_postfix({
                     'loss': f"{loss.item():.4f}",
                     'acc': f"{metrics['V2T_R1'] * 100:.1f}%",
@@ -136,11 +164,17 @@ def train(args):
         for k in val_metrics:
             val_metrics[k] /= num_val_batches
 
+        df_results = pd.DataFrame(csv_data)
+        csv_out_path = os.path.join(args.CHECKPOINT, 'val_confidence_analysis.csv')
+        df_results.to_csv(csv_out_path, index=False)
+        avg_conf_wrong = df_results[df_results['CORRECT'] == False]['CONFIDENCE'].mean()
+
         scheduler.step()
         print(
             f"[Train] Loss: {avg_train_loss:.4f} | Acc/R@1: {avg_train_r1 * 100:.2f}% | Conf: {avg_train_conf * 100:.2f}%")
         print(
-            f"[Val]  Loss: {avg_val_loss:.4f} | Acc/R@1: {val_metrics['V2T_R1'] * 100:.2f}% | Conf: {avg_val_conf * 100:.2f}%")
+            f"[Val]  Loss: {avg_val_loss:.4f} | Acc/R@1: {val_metrics['V2T_R1'] * 100:.2f}% | Conf: {avg_val_conf * 100:.2f}% | Conf wrong {avg_conf_wrong * 100:.2f}%\n" if pd.notna(
+                avg_conf_wrong) else "[-] Global Conf (Wrong)   : N/A\n")
         print(
             f"[Metrics] R@5: {val_metrics['V2T_R5'] * 100:.1f}% | R@10: {val_metrics['V2T_R10'] * 100:.1f}% | MeanRank: {val_metrics['V2T_Rank']:.2f}")
 

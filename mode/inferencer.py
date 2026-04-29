@@ -1,4 +1,9 @@
 import os
+import sys
+import runpy
+import shutil
+import tempfile
+import mediapipe as mp
 import pandas as pd
 import torch
 import torch.nn.functional as F
@@ -11,6 +16,8 @@ from pose_format import Pose
 from torchvision.transforms import Compose
 from dataset.data_preprocessing import PoseJoinSelect, TemporalInterpolatePose, PoseNormalize
 from models.vsl_net import VSLContrastiveNet
+
+VIDEO_TO_POSE_SCRIPT = shutil.which('video_to_pose')
 
 
 def run_frontend():
@@ -36,11 +43,19 @@ def inference(args):
         embedding_size=args.EMBEDDING_SIZE
     ).to(device)
 
-    checkpoint_path = os.path.join(args.CHECKPOINT, "best.pth")
+    checkpoint_path = os.path.join(args.CHECKPOINT, "best_v1.pth")
     assert os.path.exists(checkpoint_path)
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     print("[+] Load weights successfully!")
     model.eval()
+
+    mp_holistic = mp.solutions.holistic
+    holistic_model = mp_holistic.Holistic(
+        static_image_mode=False,
+        model_complexity=1,
+        enable_segmentation=False,
+        refine_face_landmarks=True
+    )
 
     assert os.path.exists(os.path.join(args.DATA_PATH, 'gloss.csv'))
     gloss_df = pd.read_csv(os.path.join(args.DATA_PATH, 'gloss.csv'))
@@ -58,7 +73,6 @@ def inference(args):
         PoseNormalize()
     ])
 
-
     @app.post("/predict")
     async def predict(req: Request):
         try:
@@ -66,18 +80,53 @@ def inference(args):
             file = form_data.get("file", None)
 
             if not file:
-                print("Nothing to predict")
-                return JSONResponse(
-                    status_code=400,
-                    content={"status": "error", "message": "Nothing to predict!"}
-                )
+                return JSONResponse(status_code=400, content={"status": "error", "message": "No receive file video!"})
 
-            data = await file.read()
-            try:
-                pose_obj = Pose.read(data)
-            except Exception as e:
-                print(f"Can't read file: {e}")
-                raise e
+            with tempfile.TemporaryDirectory() as tmpdir:
+                # 1. Lưu file .webm raw do trình duyệt gửi lên
+                raw_video_path = os.path.join(tmpdir, "raw_video.webm")
+                video_tmp_path = os.path.join(tmpdir, "input_video.mp4")
+                pose_tmp_path = os.path.join(tmpdir, "output.pose")
+
+                with open(raw_video_path, "wb") as f:
+                    f.write(await file.read())
+
+                try:
+                    subprocess.run(
+                        ['ffmpeg', '-y', '-i', raw_video_path, '-c:v', 'libx264', '-preset', 'ultrafast',
+                         video_tmp_path],
+                        check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                    )
+                except Exception:
+                    video_tmp_path = raw_video_path
+
+                if not VIDEO_TO_POSE_SCRIPT:
+                    return JSONResponse(status_code=500,
+                                        content={"status": "error", "message": "video_to_pose script not found"})
+
+                old_argv = sys.argv
+                sys.argv = ['video_to_pose', '-i', video_tmp_path, '-o', pose_tmp_path, '--format', 'mediapipe']
+
+                try:
+                    runpy.run_path(VIDEO_TO_POSE_SCRIPT, run_name="__main__")
+                except SystemExit as e:
+                    if e.code != 0 and e.code is not None:
+                        return JSONResponse(status_code=500,
+                                            content={"status": "error", "message": "Error extract file"})
+                finally:
+                    sys.argv = old_argv
+
+                if not os.path.exists(pose_tmp_path):
+                    return {
+                        "status": "success",
+                        "action": "...",
+                        "confidence": 0.0,
+                        "message": "Video quá ngắn, bỏ qua."
+                    }
+
+                with open(pose_tmp_path, "rb") as f:
+                    pose_data_bytes = f.read()
+                    pose_obj = Pose.read(pose_data_bytes)
 
             pose_data = inference_transforms(pose_obj)
             pose_data = pose_data.reshape(pose_data.size(0), -1)
@@ -92,25 +141,16 @@ def inference(args):
                 probs = F.softmax(logits, dim=-1)
 
                 conf, pred_idx = torch.max(probs, dim=1)
+                predicted_word = vocab_dict.get(pred_idx.item(), "Unknown")
 
-                pred_index_val = pred_idx.item()
-                predicted_word = vocab_dict.get(pred_index_val, str(pred_index_val))
-
-                response = {
+                return {
                     "status": "success",
                     "action": predicted_word,
                     "confidence": float(conf.item()),
                     "message": "Predict successfully!"
                 }
-                print(response)
-                return response
 
         except Exception as e:
-            import traceback
-            traceback.print_exc()
-            return JSONResponse(
-                status_code=400,
-                content={"status": "error", "message": f"Can't parse pose file: {e}"}
-            )
+            return JSONResponse(status_code=500, content={"status": "error", "message": f"Error system: {str(e)}"})
 
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -13,219 +13,152 @@ function App() {
 
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
-    const holistic = useRef(null);
     const [poseReady, setPoseReady] = useState(false);
 
-    const poseBuffer = useRef([]);
-    const prevPose = useRef(null);
+    const mediaRecorderRef = useRef(null);
     const isRecording = useRef(false);
     const silenceCounter = useRef(0);
-    const isProcessingRef = useRef(false);
+    const prevFrameData = useRef(null);
 
-    const MOTION_THRESHOLD = 0.000015;
-    const SILENCE_FRAMES = 15;
-    const MIN_FRAMES = 0;
+    const chunksRef = useRef([]);
 
-    const sendToServer = async (frames) => {
-        if (!frames || frames.length < MIN_FRAMES) return;
+    const MOTION_THRESHOLD = 12;
+    const SILENCE_FRAMES = 50;
 
-        const PHeader = window.PoseHeader || window.dtpose?.PoseHeader;
-        const PBody = window.PoseBody || window.dtpose?.PoseBody;
-        const DPose = window.DTPose || window.dtpose?.DTPose;
+    const sendVideoToServer = (videoBlob) => {
+        if (!videoBlob || videoBlob.size === 0) return;
 
-        if (!PHeader || !PBody || !DPose) {
-            return;
+        const formData = new FormData();
+        formData.append("file", videoBlob, "video_stream.webm");
+
+        axios.post('http://localhost:8000/predict', formData, {
+            headers: {'Content-Type': 'multipart/form-data'}
+        })
+        .then(res => {
+            const {action, confidence} = res.data;
+            if (confidence > 0.8 && action !== lastWord.current) {
+                setTranscript(prev => prev + (prev ? " " : "") + action);
+                lastWord.current = action;
+            }
+        })
+        .catch(err => {});
+    };
+
+    const startRecording = () => {
+        if (!streamActive || mode === 'upload') return;
+
+        let streamToRecord = null;
+        if (mode === 'screen' && canvasRef.current) {
+            streamToRecord = canvasRef.current.captureStream(60);
+        } else if (videoRef.current && videoRef.current.srcObject) {
+            streamToRecord = videoRef.current.srcObject;
         }
 
-        try {
-            const handPoints = [
-                "WRIST", "THUMB_CMC", "THUMB_MCP", "THUMB_IP", "THUMB_TIP",
-                "INDEX_FINGER_MCP", "INDEX_FINGER_PIP", "INDEX_FINGER_DIP", "INDEX_FINGER_TIP",
-                "MIDDLE_FINGER_MCP", "MIDDLE_FINGER_PIP", "MIDDLE_FINGER_DIP", "MIDDLE_FINGER_TIP",
-                "RING_FINGER_MCP", "RING_FINGER_PIP", "RING_FINGER_DIP", "RING_FINGER_TIP",
-                "PINKY_MCP", "PINKY_PIP", "PINKY_DIP", "PINKY_TIP"
-            ];
+        if (streamToRecord) {
+            try {
+                const recorder = new MediaRecorder(streamToRecord, { mimeType: 'video/webm' });
+                chunksRef.current = [];
 
-            const header = new PHeader({
-                version: 0.1,
-                dimensions: {width: 640, height: 480, depth: 1000},
-                components: [
-                    {
-                        name: "POSE_LANDMARKS",
-                        points: [
-                            "NOSE", "LEFT_EYE_INNER", "LEFT_EYE", "LEFT_EYE_OUTER",
-                            "RIGHT_EYE_INNER", "RIGHT_EYE", "RIGHT_EYE_OUTER",
-                            "LEFT_EAR", "RIGHT_EAR", "MOUTH_LEFT", "MOUTH_RIGHT",
-                            "LEFT_SHOULDER", "RIGHT_SHOULDER", "LEFT_ELBOW", "RIGHT_ELBOW",
-                            "LEFT_WRIST", "RIGHT_WRIST", "LEFT_PINKY", "RIGHT_PINKY",
-                            "LEFT_INDEX", "RIGHT_INDEX", "LEFT_THUMB", "RIGHT_THUMB",
-                            "LEFT_HIP", "RIGHT_HIP", "LEFT_KNEE", "RIGHT_KNEE",
-                            "LEFT_ANKLE", "RIGHT_ANKLE", "LEFT_HEEL", "RIGHT_HEEL",
-                            "LEFT_FOOT_INDEX", "RIGHT_FOOT_INDEX"
-                        ],
-                        limbs: [], colors: [], format: "XYZc"
-                    },
-                    {
-                        name: "LEFT_HAND_LANDMARKS",
-                        points: handPoints,
-                        limbs: [], colors: [], format: "XYZc"
-                    },
-                    {
-                        name: "RIGHT_HAND_LANDMARKS",
-                        points: handPoints,
-                        limbs: [], colors: [], format: "XYZc"
+                recorder.ondataavailable = (e) => {
+                    if (e.data && e.data.size > 0) {
+                        chunksRef.current.push(e.data);
                     }
-                ]
-            });
+                };
 
-            const fps = 30;
-            const numFrames = frames.length;
-            const totalPoints = 75;
-            const dataArray = new Float32Array(numFrames * totalPoints * 3);
-            const confArray = new Float32Array(numFrames * totalPoints);
+                recorder.onstop = () => {
+                    const videoBlob = new Blob(chunksRef.current, { type: 'video/webm' });
+                    if (videoBlob.size > 15000) {
+                        sendVideoToServer(videoBlob);
+                    }
+                    chunksRef.current = [];
+                };
 
-            let dataIdx = 0;
-            let confIdx = 0;
+                recorder.start(500);
+                mediaRecorderRef.current = recorder;
+                isRecording.current = true;
+            } catch (err) {}
+        }
+    };
 
-            frames.forEach(frame => {
-                for (let i = 0; i < 33; i++) {
-                    const point = frame.pose[i] || {x: 0, y: 0, z: 0, visibility: 0};
-                    dataArray[dataIdx++] = point.x;
-                    dataArray[dataIdx++] = point.y;
-                    dataArray[dataIdx++] = point.z || 0;
-                    confArray[confIdx++] = point.visibility || 1.0;
-                }
-                for (let i = 0; i < 21; i++) {
-                    const point = (frame.left && frame.left[i]) ? frame.left[i] : {x: 0, y: 0, z: 0};
-                    dataArray[dataIdx++] = point.x;
-                    dataArray[dataIdx++] = point.y;
-                    dataArray[dataIdx++] = point.z || 0;
-                    confArray[confIdx++] = (frame.left && frame.left[i]) ? 1.0 : 0.0;
-                }
-                for (let i = 0; i < 21; i++) {
-                    const point = (frame.right && frame.right[i]) ? frame.right[i] : {x: 0, y: 0, z: 0};
-                    dataArray[dataIdx++] = point.x;
-                    dataArray[dataIdx++] = point.y;
-                    dataArray[dataIdx++] = point.z || 0;
-                    confArray[confIdx++] = (frame.right && frame.right[i]) ? 1.0 : 0.0;
-                }
-            });
-
-            const body = new PBody(fps, dataArray, confArray);
-            const poseFile = new DPose(header, body);
-            const binaryBuffer = await poseFile.write();
-            const blob = new Blob([binaryBuffer], {type: 'application/octet-stream'});
-            const formData = new FormData();
-            formData.append("file", blob, "video_capture.pose");
-
-            axios.post('http://localhost:8000/predict', formData, {
-                headers: {'Content-Type': 'multipart/form-data'}
-            })
-            .then(res => {
-                const {action, confidence} = res.data;
-                if (confidence > 0.8 && action !== lastWord.current) {
-                    setTranscript(prev => prev + (prev ? " " : "") + action);
-                    lastWord.current = action;
-                }
-            })
-            .catch(err => {});
-        } catch (error) {}
+    const stopRecordingAndSend = () => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+            mediaRecorderRef.current.stop();
+        }
+        isRecording.current = false;
+        silenceCounter.current = 0;
     };
 
     useEffect(() => {
-        const initHolistic = () => {
-            if (window.Holistic) {
-                holistic.current = new window.Holistic({
-                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`,
-                });
-                holistic.current.setOptions({
-                    modelComplexity: 1,
-                    smoothLandmarks: true,
-                    minDetectionConfidence: 0.5,
-                    minTrackingConfidence: 0.5
-                });
-                holistic.current.onResults((results) => {
-                    if (results.poseLandmarks) {
-                        const frameData = {
-                            pose: results.poseLandmarks,
-                            left: results.leftHandLandmarks,
-                            right: results.rightHandLandmarks
-                        };
-
-                        if (modeRef.current === 'upload') {
-                            poseBuffer.current.push(frameData);
-                        } else {
-                            let motion = 0;
-                            if (prevPose.current) {
-                                [15, 16, 19, 20].forEach(p => {
-                                    if (results.poseLandmarks[p] && prevPose.current[p]) {
-                                        motion += Math.abs(results.poseLandmarks[p].x - prevPose.current[p].x) +
-                                                  Math.abs(results.poseLandmarks[p].y - prevPose.current[p].y);
-                                    }
-                                });
-                            }
-                            prevPose.current = results.poseLandmarks;
-                            if (motion > MOTION_THRESHOLD) {
-                                if (!isRecording.current) {
-                                    isRecording.current = true;
-                                    poseBuffer.current = [];
-                                }
-                                silenceCounter.current = 0;
-                            } else if (isRecording.current) {
-                                silenceCounter.current += 1;
-                                if (silenceCounter.current > SILENCE_FRAMES) {
-                                    isRecording.current = false;
-                                    sendToServer([...poseBuffer.current]);
-                                    poseBuffer.current = [];
-                                }
-                            }
-                            if (isRecording.current || silenceCounter.current > 0) {
-                                poseBuffer.current.push(frameData);
-                            }
-                        }
-                    }
-                });
-                setPoseReady(true);
-            } else {
-                setTimeout(initHolistic, 500);
-            }
-        };
-        initHolistic();
+        setPoseReady(true);
     }, []);
 
     useEffect(() => {
         let animationId;
-        const processFrame = async () => {
-            if (isProcessingRef.current) {
-                animationId = requestAnimationFrame(processFrame);
-                return;
-            }
-            if (videoRef.current && videoRef.current.readyState >= 2 && holistic.current) {
-                isProcessingRef.current = true;
-                try {
-                    const video = videoRef.current;
-                    if (mode === 'screen' && streamActive && canvasRef.current) {
-                        const rect = video.getBoundingClientRect();
-                        const scaleX = video.videoWidth / rect.width;
-                        const scaleY = video.videoHeight / rect.height;
-                        const ctx = canvasRef.current.getContext('2d');
-                        canvasRef.current.width = cropBox.width * scaleX;
-                        canvasRef.current.height = cropBox.height * scaleY;
-                        ctx.drawImage(video, cropBox.x * scaleX, cropBox.y * scaleY, canvasRef.current.width, canvasRef.current.height, 0, 0, canvasRef.current.width, canvasRef.current.height);
-                        await holistic.current.send({image: canvasRef.current});
-                    } else if (streamActive) {
-                        await holistic.current.send({image: video});
+
+        const diffCanvas = document.createElement('canvas');
+        diffCanvas.width = 64;
+        diffCanvas.height = 48;
+        const diffCtx = diffCanvas.getContext('2d', { willReadFrequently: true });
+
+        const processFrame = () => {
+            if (videoRef.current && videoRef.current.readyState >= 2) {
+                const video = videoRef.current;
+
+                if (mode === 'screen' && streamActive && canvasRef.current) {
+                    const rect = video.getBoundingClientRect();
+                    const scaleX = video.videoWidth / rect.width;
+                    const scaleY = video.videoHeight / rect.height;
+                    const ctx = canvasRef.current.getContext('2d');
+
+                    const newW = cropBox.width * scaleX;
+                    const newH = cropBox.height * scaleY;
+
+                    if (canvasRef.current.width !== newW) canvasRef.current.width = newW;
+                    if (canvasRef.current.height !== newH) canvasRef.current.height = newH;
+
+                    ctx.drawImage(video, cropBox.x * scaleX, cropBox.y * scaleY, newW, newH, 0, 0, newW, newH);
+                }
+
+                if (streamActive && mode !== 'upload') {
+                    diffCtx.drawImage(mode === 'screen' ? canvasRef.current : video, 0, 0, 64, 48);
+                    const currentData = diffCtx.getImageData(0, 0, 64, 48).data;
+
+                    if (prevFrameData.current) {
+                        let diffSum = 0;
+                        for (let i = 0; i < currentData.length; i += 4) {
+                            diffSum += Math.abs(currentData[i] - prevFrameData.current[i]) +
+                                       Math.abs(currentData[i+1] - prevFrameData.current[i+1]) +
+                                       Math.abs(currentData[i+2] - prevFrameData.current[i+2]);
+                        }
+
+                        const avgDiff = diffSum / (64 * 48 * 3);
+
+                        if (avgDiff > MOTION_THRESHOLD) {
+                            if (!isRecording.current) {
+                                startRecording();
+                            }
+                            silenceCounter.current = 0;
+                        } else {
+                            if (isRecording.current) {
+                                silenceCounter.current += 1;
+                                if (silenceCounter.current > SILENCE_FRAMES) {
+                                    stopRecordingAndSend();
+                                }
+                            }
+                        }
                     }
-                } catch (err) {}
-                finally { isProcessingRef.current = false; }
+                    prevFrameData.current = new Uint8ClampedArray(currentData);
+                }
             }
             animationId = requestAnimationFrame(processFrame);
         };
+
         processFrame();
         return () => cancelAnimationFrame(animationId);
     }, [cropBox, mode, streamActive]);
 
     const stopActiveStream = () => {
+        stopRecordingAndSend();
         if (videoRef.current) {
             if (videoRef.current.srcObject) {
                 videoRef.current.srcObject.getTracks().forEach(t => t.stop());
@@ -245,9 +178,7 @@ function App() {
         stopActiveStream();
         setStreamActive(false);
         setIsVideoEnded(false);
-        poseBuffer.current = [];
-        isRecording.current = false;
-        silenceCounter.current = 0;
+        prevFrameData.current = null;
     };
 
     const handleVideoUpload = (e) => {
@@ -259,10 +190,9 @@ function App() {
             videoRef.current.play().then(() => {
                 setStreamActive(true);
                 setIsVideoEnded(false);
-                poseBuffer.current = [];
-                isRecording.current = false;
-                silenceCounter.current = 0;
             }).catch(err => {});
+
+            sendVideoToServer(file);
         }
     };
 
@@ -292,17 +222,17 @@ function App() {
                         <button onClick={() => handleTabChange('upload')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${mode === 'upload' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:bg-zinc-800/50'}`}>Tải Video Lên</button>
                     </div>
                     <div className="px-4 mt-auto mb-6">
-                        {mode === 'camera' && <button onClick={async () => { stopActiveStream(); const s = await navigator.mediaDevices.getUserMedia({video: true}); videoRef.current.srcObject = s; setStreamActive(true); }} className="w-full py-2.5 bg-zinc-100 text-zinc-900 rounded-lg text-sm font-semibold">Khởi động Camera</button>}
-                        {mode === 'screen' && <button onClick={async () => { stopActiveStream(); const s = await navigator.mediaDevices.getDisplayMedia({video: true}); videoRef.current.srcObject = s; setStreamActive(true); }} className="w-full py-2.5 bg-zinc-100 text-zinc-900 rounded-lg text-sm font-semibold">Chọn Nguồn Quét</button>}
+                        {mode === 'camera' && <button onClick={async () => { stopActiveStream(); const s = await navigator.mediaDevices.getUserMedia({video: { frameRate: { ideal: 60 } }}); videoRef.current.srcObject = s; setStreamActive(true); }} className="w-full py-2.5 bg-zinc-100 text-zinc-900 rounded-lg text-sm font-semibold">Khởi động Camera</button>}
+                        {mode === 'screen' && <button onClick={async () => { stopActiveStream(); const s = await navigator.mediaDevices.getDisplayMedia({video: { frameRate: { ideal: 60 } }}); videoRef.current.srcObject = s; setStreamActive(true); }} className="w-full py-2.5 bg-zinc-100 text-zinc-900 rounded-lg text-sm font-semibold">Chọn Nguồn Quét</button>}
                         {mode === 'upload' && <input type="file" accept="video/*" onChange={handleVideoUpload} className="w-full text-sm text-zinc-400 file:bg-zinc-800 file:text-zinc-200 file:rounded-lg file:border-0 file:px-4 file:py-2" />}
                     </div>
                 </aside>
 
                 <section className="flex-1 bg-black relative flex items-center justify-center overflow-hidden">
-                    <video ref={videoRef} autoPlay loop={mode !== 'upload'} muted playsInline onEnded={() => { if (mode === 'upload') { sendToServer([...poseBuffer.current]); setIsVideoEnded(true); } }} className={`absolute inset-0 w-full h-full object-contain pointer-events-none ${streamActive ? 'opacity-100' : 'opacity-0'}`} />
+                    <video ref={videoRef} autoPlay loop={mode !== 'upload'} muted playsInline onEnded={() => { if (mode === 'upload') { setIsVideoEnded(true); } }} className={`absolute inset-0 w-full h-full object-contain pointer-events-none ${streamActive ? 'opacity-100' : 'opacity-0'}`} />
                     {streamActive && mode === 'upload' && isVideoEnded && (
                         <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-all text-center">
-                            <button onClick={() => { setIsVideoEnded(false); poseBuffer.current = []; isRecording.current = false; silenceCounter.current = 0; if (videoRef.current) { videoRef.current.currentTime = 0; videoRef.current.play(); } }} className="px-6 py-3 bg-zinc-100 text-zinc-900 rounded-full text-sm font-semibold shadow-xl hover:scale-105 transition-all">Phát lại video</button>
+                            <button onClick={() => { setIsVideoEnded(false); if (videoRef.current) { videoRef.current.currentTime = 0; videoRef.current.play(); } }} className="px-6 py-3 bg-zinc-100 text-zinc-900 rounded-full text-sm font-semibold shadow-xl hover:scale-105 transition-all">Phát lại video</button>
                         </div>
                     )}
                     {streamActive && mode === 'screen' && (

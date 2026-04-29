@@ -2,7 +2,23 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6af3942a-5de7-4d35-a907-67240361f5cc" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/checkpoint/best.pth" beforeDir="false" afterPath="$PROJECT_DIR$/checkpoint/best.pth" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/checkpoint/lasted.pth" beforeDir="false" afterPath="$PROJECT_DIR$/checkpoint/lasted.pth" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/checkpoint/test_confidence_analysis.csv" beforeDir="false" afterPath="$PROJECT_DIR$/checkpoint/test_confidence_analysis.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/vsl_net_configuration.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/config/vsl_net_configuration.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/demo/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/demo/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/demo/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/demo/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/demo/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/demo/src/App.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mode/inferencer.py" beforeDir="false" afterPath="$PROJECT_DIR$/mode/inferencer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mode/trainer.py" beforeDir="false" afterPath="$PROJECT_DIR$/mode/trainer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tensorboard/Accuracy_R1_Train/events.out.tfevents.1777398338.window.98187.3" beforeDir="false" afterPath="$PROJECT_DIR$/tensorboard/Accuracy_R1_Train/events.out.tfevents.1777398338.window.98187.3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tensorboard/Accuracy_R1_Val/events.out.tfevents.1777398338.window.98187.4" beforeDir="false" afterPath="$PROJECT_DIR$/tensorboard/Accuracy_R1_Val/events.out.tfevents.1777398338.window.98187.4" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tensorboard/Confidence_Train/events.out.tfevents.1777398338.window.98187.5" beforeDir="false" afterPath="$PROJECT_DIR$/tensorboard/Confidence_Train/events.out.tfevents.1777398338.window.98187.5" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tensorboard/Confidence_Val/events.out.tfevents.1777398338.window.98187.6" beforeDir="false" afterPath="$PROJECT_DIR$/tensorboard/Confidence_Val/events.out.tfevents.1777398338.window.98187.6" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tensorboard/Loss_Train/events.out.tfevents.1777398338.window.98187.1" beforeDir="false" afterPath="$PROJECT_DIR$/tensorboard/Loss_Train/events.out.tfevents.1777398338.window.98187.1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tensorboard/Loss_Val/events.out.tfevents.1777398338.window.98187.2" beforeDir="false" afterPath="$PROJECT_DIR$/tensorboard/Loss_Val/events.out.tfevents.1777398338.window.98187.2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tensorboard/events.out.tfevents.1777398172.window.98187.0" beforeDir="false" afterPath="$PROJECT_DIR$/tensorboard/events.out.tfevents.1777398172.window.98187.0" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -162,7 +178,7 @@
       <workItem from="1777183553258" duration="15350000" />
       <workItem from="1777211492717" duration="13230000" />
       <workItem from="1777307245399" duration="7770000" />
-      <workItem from="1777342242671" duration="24260000" />
+      <workItem from="1777342242671" duration="42265000" />
     </task>
     <servers />
   </component>

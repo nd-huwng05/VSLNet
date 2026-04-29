@@ -9,10 +9,10 @@ BASIC:
   FRAMES: 64
 
 TRAIN:
-  EPOCHS: 200
+  EPOCHS: 300
   BATCH_SIZE: 128
-  LR: 1e-5
-  RESUME: True
+  LR: 1e-4
+  RESUME: False
   TENSORBOARD: './tensorboard'
 
 INFERENCE:
