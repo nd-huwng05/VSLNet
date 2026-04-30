@@ -68,6 +68,6 @@ class VideoEncoder(nn.Module):
 
         return embedding
 
-if __name__ == 'main':
+if __name__ == '__main__':
     model = VideoEncoder(num_joints=42, in_chans=1)
     model.train()

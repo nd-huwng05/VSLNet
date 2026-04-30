@@ -93,7 +93,7 @@ def inference(args):
 
                 try:
                     subprocess.run(
-                        ['ffmpeg', '-y', '-i', raw_video_path, '-c:v', 'libx264', '-preset', 'ultrafast',
+                        ['ffmpeg', '-y', '-i', '-filter:v', 'fps=30', '-c:v', 'libx264', '-preset', 'ultrafast',
                          video_tmp_path],
                         check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
                     )

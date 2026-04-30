@@ -37,8 +37,8 @@ def train(args):
     train_dataset = VSLPoseDataset(root_dir=args.DATA_PATH, split='train', transform=train_transforms)
     val_dataset = VSLPoseDataset(root_dir=args.DATA_PATH, split='val', transform=val_transforms)
 
-    train_loader = DataLoader(train_dataset, batch_size=args.BATCH_SIZE, shuffle=True, drop_last=True, num_workers=4)
-    val_loader = DataLoader(val_dataset, batch_size=args.BATCH_SIZE, shuffle=False, drop_last=False, num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=args.BATCH_SIZE, shuffle=True, drop_last=True, num_workers=args.WORKERS)
+    val_loader = DataLoader(val_dataset, batch_size=args.BATCH_SIZE, shuffle=False, drop_last=False, num_workers=args.WORKERS)
     print(f"Loader dataset ready!")
     print(f"Preparing models...")
     model = VSLContrastiveNet(vocab_size=args.VOCAB_SIZE, embedding_size=args.EMBEDDING_SIZE).to(device)
